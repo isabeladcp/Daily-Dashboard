@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Inicial</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Adicionando Chart.js via CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
+    <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
+
+    <style>
+        :root {
+            /* Modo Escuro (Padrão) */
+            --bg-color: #0f172a;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --card-bg: rgba(30, 41, 59, 0.6);
+            --card-border: rgba(255, 255, 255, 0.08);
+
+            /* Cores Escuras: Azul, Verde e Vinho */
+            --accent-1: #3b82f6;
+            /* Azul */
+            --accent-1-light: rgba(59, 130, 246, 0.2);
+            --accent-2: #10b981;
+            /* Verde */
+            --accent-2-light: rgba(16, 185, 129, 0.2);
+            --accent-3: #be123c;
+            /* Vinho */
+            --accent-3-light: rgba(190, 18, 60, 0.2);
+
+            --bg-gradient-1: rgba(59, 130, 246, 0.12);
+            --bg-gradient-2: rgba(190, 18, 60, 0.12);
+        }
+
+        [data-theme="light"] {
+            /* Modo Claro */
+            --bg-color: #f8fafc;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --card-bg: rgba(255, 255, 255, 0.7);
+            --card-border: rgba(0, 0, 0, 0.08);
+
+            /* Cores Claras: Laranja, Magenta e Azul */
+            --accent-1: #f97316;
+            /* Laranja */
+            --accent-1-light: rgba(249, 115, 22, 0.15);
+            --accent-2: #d946ef;
+            /* Magenta */
+            --accent-2-light: rgba(217, 70, 239, 0.15);
+            --accent-3: #0ea5e9;
+            /* Azul */
+            --accent-3-light: rgba(14, 165, 233, 0.15);
+
+            --bg-gradient-1: rgba(249, 115, 22, 0.08);
+            --bg-gradient-2: rgba(14, 165, 233, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-color);
+            background-image:
+                radial-gradient(circle at 15% 50%, var(--bg-gradient-1), transparent 25%),
+                radial-gradient(circle at 85% 30%, var(--bg-gradient-2), transparent 25%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 4rem 2rem;
+            overflow-x: hidden;
+            position: relative;
+            transition: background-color 0.5s ease, color 0.5s ease;
+        }
+
+        /* Controles do Topo */
+        .top-controls {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            display: flex;
+            gap: 1rem;
+            z-index: 10;
+        }
+
+        .top-controls button {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            color: var(--text-primary);
+            border-radius: 50px;
+            padding: 0.6rem 1.2rem;
+            font-family: inherit;
+            font-weight: 500;
+            cursor: pointer;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            transition: all 0.4s ease;
+        }
+
+        .top-controls button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .auth-button {
+            border-color: var(--accent-1) !important;
+            color: var(--accent-1) !important;
+        }
+
+        .container {
+            max-width: 1100px;
+            width: 100%;
+        }
+
+        header {
+            margin-bottom: 4rem;
+            text-align: center;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .date {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 1rem;
+            transition: color 0.5s ease;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -1px;
+            transition: all 0.5s ease;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 2.5rem;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 220px;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+                background-color 0.5s ease, border-color 0.5s ease, box-shadow 0.4s ease;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(800px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.06), transparent 40%);
+            opacity: 0;
+            transition: opacity 0.5s;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        [data-theme="light"] .card::before {
+            background: radial-gradient(800px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(0, 0, 0, 0.03), transparent 40%);
+        }
+
+        .card:hover::before {
+            opacity: 1;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            border-color: var(--text-secondary);
+        }
+
+        .card-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .icon-container {
+            width: 54px;
+            height: 54px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1.2rem;
+            font-size: 1.6rem;
+            box-shadow: inset 0 2px 10px rgba(255, 255, 255, 0.1);
+            transition: all 0.5s ease;
+        }
+
+        [data-theme="light"] .icon-container {
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .card:nth-child(1) .icon-container,
+        .icon-emails {
+            background: linear-gradient(135deg, var(--accent-1-light), transparent);
+            color: var(--accent-1);
+            border: 1px solid var(--accent-1-light);
+        }
+
+        .card:nth-child(2) .icon-container,
+        .icon-agenda {
+            background: linear-gradient(135deg, var(--accent-2-light), transparent);
+            color: var(--accent-2);
+            border: 1px solid var(--accent-2-light);
+        }
+
+        .card:nth-child(3) .icon-container {
+            background: linear-gradient(135deg, var(--accent-3-light), transparent);
+            color: var(--accent-3);
+            border: 1px solid var(--accent-3-light);
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: color 0.5s ease;
+        }
+
+        .card-value {
+            font-size: 4rem;
+            font-weight: 700;
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+            color: var(--text-primary);
+            transition: color 0.5s ease;
+        }
+
+        /* Seção Inferior: Gráfico e Agenda */
+        .dashboard-content {
+            display: grid;
+            grid-template-columns: 1.8fr 1.2fr;
+            gap: 2rem;
+            width: 100%;
+            margin-top: 2rem;
+            animation: fadeInUp 0.8s ease-out 0.4s both;
+        }
+
+        .content-card {
+            min-height: 380px;
+            padding-bottom: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+
+        .content-card-header {
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        .chart-container {
+            position: relative;
+            flex-grow: 1;
+            width: 100%;
+            min-height: 250px;
+            z-index: 2;
+        }
+
+        /* Agenda de Hoje */
+        .agenda-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            position: relative;
+            z-index: 2;
+            flex-grow: 1;
+        }
+
+        .agenda-item {
+            display: flex;
+            align-items: center;
+            padding: 1.2rem;
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        [data-theme="light"] .agenda-item {
+            background: rgba(255, 255, 255, 0.5);
+            border-color: rgba(0, 0, 0, 0.04);
+        }
+
+        .agenda-item:hover {
+            transform: translateX(8px);
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--accent-2);
+        }
+
+        [data-theme="light"] .agenda-item:hover {
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .agenda-icon {
+            font-size: 1.4rem;
+            margin-right: 1.2rem;
+            background: var(--card-bg);
+            padding: 0.8rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .agenda-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .agenda-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            transition: color 0.5s ease;
+        }
+
+        .agenda-time {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            margin-top: 0.2rem;
+            font-weight: 400;
+            transition: color 0.5s ease;
+        }
+
+        /* Animations */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .dashboard-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            .cards-grid {
+                gap: 1.5rem;
+            }
+
+            .card {
+                padding: 1.5rem;
+                min-height: auto;
+            }
+
+            .card-value {
+                font-size: 3rem;
+            }
+
+            .top-controls {
+                top: 1rem;
+                right: 1rem;
+                flex-direction: column;
+                gap: 0.5rem;
+                align-items: flex-end;
+            }
+
+            .top-controls button {
+                font-size: 0.9rem;
+                padding: 0.5rem 1rem;
+            }
+
+            .chart-container {
+                height: 200px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Controles do Topo -->
+    <div class="top-controls">
+        <button id="authBtn" class="auth-button" onclick="handleAuthClick()" aria-label="Conectar com Google"
+            style="visibility: hidden;">
+            <span class="auth-icon">G</span>
+            <span id="authText">Conectar Conta</span>
+        </button>
+
+        <button class="theme-toggle" onclick="toggleTheme()" aria-label="Alternar modo claro/escuro">
+            <span id="themeIcon">☀️</span>
+            <span id="themeText">Modo Claro</span>
+        </button>
+    </div>
+
+    <div class="container">
+        <header>
+            <div class="date">Quarta-feira, 13 de Maio de 2026</div>
+            <h1>Por onde começo hoje?</h1>
+        </header>
+
+        <div class="cards-grid">
+            <!-- Card 1 -->
+            <div class="card">
+                <div class="card-content">
+                    <div class="card-header">
+                        <div class="icon-container">✉️</div>
+                        <div class="card-title">Emails não lidos</div>
+                    </div>
+                    <div class="card-value" id="unread-emails">--</div>
+                </div>
+            </div>
+
+            <!-- Card 2 -->
+            <div class="card">
+                <div class="card-content">
+                    <div class="card-header">
+                        <div class="icon-container">📅</div>
+                        <div class="card-title">Reuniões hoje</div>
+                    </div>
+                    <div class="card-value" id="meetings-today">--</div>
+                </div>
+            </div>
+
+            <!-- Card 3 -->
+            <div class="card">
+                <div class="card-content">
+                    <div class="card-header">
+                        <div class="icon-container">✓</div>
+                        <div class="card-title">Tarefas pendentes</div>
+                    </div>
+                    <div class="card-value">8</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seção Inferior: Gráfico e Agenda lado a lado -->
+        <div class="dashboard-content">
+
+            <!-- Gráfico -->
+            <div class="card content-card">
+                <div class="content-card-header">
+                    <div class="icon-container icon-emails" style="width: 48px; height: 48px; font-size: 1.4rem;">📊
+                    </div>
+                    <div class="card-title" style="font-weight: 600;">Volume de emails na semana</div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="emailsChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Agenda -->
+            <div class="card content-card">
+                <div class="content-card-header">
+                    <div class="icon-container icon-agenda" style="width: 48px; height: 48px; font-size: 1.4rem;">🕒
+                    </div>
+                    <div class="card-title" style="font-weight: 600;">Agenda de hoje</div>
+                </div>
+
+                <div class="agenda-list" id="agenda-list">
+                    <div class="agenda-item">
+                        <div class="agenda-icon">🔒</div>
+                        <div class="agenda-details">
+                            <div class="agenda-title">Conecte sua conta</div>
+                            <div class="agenda-time">Para ver sua agenda de hoje</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Script para o gráfico e o tema -->
+    <script>
+        let emailsChart;
+
+        function toggleTheme() {
+            const body = document.body;
+            const themeIcon = document.getElementById('themeIcon');
+            const themeText = document.getElementById('themeText');
+
+            const isCurrentlyLight = body.getAttribute('data-theme') === 'light';
+
+            if (isCurrentlyLight) {
+                body.removeAttribute('data-theme'); // Volta para Escuro
+                themeIcon.textContent = '☀️';
+                themeText.textContent = 'Modo Claro';
+                updateChartTheme(false);
+            } else {
+                body.setAttribute('data-theme', 'light'); // Muda para Claro
+                themeIcon.textContent = '🌙';
+                themeText.textContent = 'Modo Escuro';
+                updateChartTheme(true);
+            }
+        }
+
+        // Função para atualizar as cores do gráfico quando o tema muda
+        function updateChartTheme(isLight) {
+            if (!emailsChart) return;
+
+            const textColor = isLight ? '#475569' : '#94a3b8'; // text-secondary
+            const gridColor = isLight ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.05)';
+            const barColor = isLight ? 'rgba(249, 115, 22, 0.85)' : 'rgba(59, 130, 246, 0.85)'; // Segue a cor do Card 1 (Laranja ou Azul)
+            const hoverBarColor = isLight ? 'rgba(249, 115, 22, 1)' : 'rgba(59, 130, 246, 1)';
+
+            emailsChart.data.datasets[0].backgroundColor = barColor;
+            emailsChart.data.datasets[0].hoverBackgroundColor = hoverBarColor;
+
+            emailsChart.options.scales.x.ticks.color = textColor;
+            emailsChart.options.scales.x.grid.color = gridColor;
+
+            emailsChart.options.scales.y.ticks.color = textColor;
+            emailsChart.options.scales.y.grid.color = gridColor;
+
+            emailsChart.update();
+        }
+
+        // Inicializar o gráfico assim que a página carregar
+        document.addEventListener('DOMContentLoaded', function () {
+            const ctx = document.getElementById('emailsChart').getContext('2d');
+
+            // Verifica o tema inicial para setar as cores
+            const isLight = document.body.getAttribute('data-theme') === 'light';
+            const initialTextColor = isLight ? '#475569' : '#94a3b8';
+            const initialGridColor = isLight ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.05)';
+            const initialBarColor = isLight ? 'rgba(249, 115, 22, 0.85)' : 'rgba(59, 130, 246, 0.85)';
+            const initialHoverBarColor = isLight ? 'rgba(249, 115, 22, 1)' : 'rgba(59, 130, 246, 1)';
+
+            const labels = ['Qui', 'Sex', 'Sáb', 'Dom', 'Seg', 'Ter', 'Qua'];
+            const data = [12, 5, 8, 20, 3, 15, 9];
+
+            // Configuração do Chart.js para ficar com o estilo do nosso dashboard
+            Chart.defaults.font.family = "'Outfit', sans-serif";
+
+            emailsChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Emails Recebidos',
+                        data: data,
+                        backgroundColor: initialBarColor,
+                        hoverBackgroundColor: initialHoverBarColor,
+                        borderRadius: 6, // Barras com cantos arredondados
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false // Escondemos a legenda para um design mais limpo
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.9)', // Fundo escuro do tooltip
+                            titleFont: { size: 14, weight: 'normal' },
+                            bodyFont: { size: 16, weight: 'bold' },
+                            padding: 12,
+                            cornerRadius: 12,
+                            displayColors: false,
+                            yAlign: 'bottom'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: initialGridColor,
+                                drawBorder: false
+                            },
+                            ticks: {
+                                color: initialTextColor,
+                                stepSize: 5
+                            },
+                            border: { display: false }
+                        },
+                        x: {
+                            grid: {
+                                display: false, // Tiramos as linhas verticais
+                                drawBorder: false
+                            },
+                            ticks: {
+                                color: initialTextColor,
+                                font: { weight: '500' }
+                            },
+                            border: { display: false }
+                        }
+                    },
+                    animation: {
+                        duration: 1200,
+                        easing: 'easeOutQuart'
+                    }
+                }
+            });
+        });
+
+        // ---------------------------------------------------------
+        // INTEGRAÇÃO COM GOOGLE APIS
+        // ---------------------------------------------------------
+        const CLIENT_ID = '727820618894-mum9ksvji4o3325gm4a04lmu8fsgkgog.apps.googleusercontent.com';
+        const DISCOVERY_DOCS = [
+            'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest',
+            'https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest'
+        ];
+        const SCOPES = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/gmail.readonly';
+
+        let tokenClient;
+        let gapiInited = false;
+        let gisInited = false;
+
+        function gapiLoaded() {
+            gapi.load('client', initializeGapiClient);
+        }
+
+        async function initializeGapiClient() {
+            await gapi.client.init({
+                discoveryDocs: DISCOVERY_DOCS,
+            });
+            gapiInited = true;
+            maybeEnableButtons();
+        }
+
+        function gisLoaded() {
+            tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: CLIENT_ID,
+                scope: SCOPES,
+                callback: '', // definido mais tarde
+            });
+            gisInited = true;
+            maybeEnableButtons();
+        }
+
+        function maybeEnableButtons() {
+            if (gapiInited && gisInited) {
+                document.getElementById('authBtn').style.visibility = 'visible';
+            }
+        }
+
+        function handleAuthClick() {
+            tokenClient.callback = async (resp) => {
+                if (resp.error !== undefined) {
+                    console.error(resp);
+                    return;
+                }
+
+                // Mudar estado do botão
+                const authBtn = document.getElementById('authBtn');
+                authBtn.innerHTML = '<span class="auth-icon">✓</span> <span id="authText">Conectado</span>';
+                authBtn.style.borderColor = 'var(--accent-2)';
+                authBtn.style.color = 'var(--accent-2)';
+                authBtn.onclick = null; // desabilita clique
+                authBtn.style.cursor = 'default';
+
+                document.getElementById('unread-emails').innerText = '...';
+                document.getElementById('meetings-today').innerText = '...';
+                document.getElementById('agenda-list').innerHTML = '<div class="agenda-item"><div class="agenda-details"><div class="agenda-title">Carregando dados...</div></div></div>';
+
+                await fetchDashboardData();
+            };
+
+            if (gapi.client.getToken() === null) {
+                tokenClient.requestAccessToken({ prompt: 'consent' });
+            } else {
+                tokenClient.requestAccessToken({ prompt: '' });
+            }
+        }
+
+        async function fetchDashboardData() {
+            try {
+                // 1. Emails Não Lidos
+                const gmailResponse = await gapi.client.gmail.users.messages.list({
+                    'userId': 'me',
+                    'q': 'is:unread in:inbox'
+                });
+                const unreadCount = gmailResponse.result.messages ? gmailResponse.result.messages.length : 0;
+                document.getElementById('unread-emails').innerText = unreadCount;
+
+                // 2. Agenda de Hoje
+                const now = new Date();
+                const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+                const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59).toISOString();
+
+                const calendarResponse = await gapi.client.calendar.events.list({
+                    'calendarId': 'primary',
+                    'timeMin': startOfDay,
+                    'timeMax': endOfDay,
+                    'showDeleted': false,
+                    'singleEvents': true,
+                    'orderBy': 'startTime'
+                });
+
+                const events = calendarResponse.result.items || [];
+                document.getElementById('meetings-today').innerText = events.length;
+
+                const agendaList = document.getElementById('agenda-list');
+                agendaList.innerHTML = '';
+
+                if (events.length > 0) {
+                    events.forEach(event => {
+                        const start = event.start.dateTime || event.start.date;
+                        const startTime = new Date(start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                        let durationStr = 'Dia inteiro';
+                        if (event.start.dateTime && event.end.dateTime) {
+                            const diffMs = new Date(event.end.dateTime) - new Date(event.start.dateTime);
+                            const diffMins = Math.round(diffMs / 60000);
+                            durationStr = diffMins >= 60 ? `${(diffMins / 60).toFixed(1).replace('.0', '')}h` : `${diffMins} min`;
+                        }
+
+                        const agendaItem = `
+                            <div class="agenda-item">
+                                <div class="agenda-icon">📅</div>
+                                <div class="agenda-details">
+                                    <div class="agenda-title">${event.summary || '(Sem título)'}</div>
+                                    <div class="agenda-time">${startTime} • ${durationStr}</div>
+                                </div>
+                            </div>
+                        `;
+                        agendaList.innerHTML += agendaItem;
+                    });
+                } else {
+                    agendaList.innerHTML = '<div class="agenda-item"><div class="agenda-details"><div class="agenda-title">Sua agenda está livre!</div><div class="agenda-time">Aproveite o dia</div></div></div>';
+                }
+
+                // 3. Volume de Emails (Últimos 7 dias)
+                const labels = [];
+                const data = [];
+                const promises = [];
+
+                for (let i = 6; i >= 0; i--) {
+                    const d = new Date();
+                    d.setDate(d.getDate() - i);
+                    const dayName = d.toLocaleDateString('pt-BR', { weekday: 'short' });
+                    labels.push(dayName);
+
+                    const y = d.getFullYear();
+                    const m = String(d.getMonth() + 1).padStart(2, '0');
+                    const day = String(d.getDate()).padStart(2, '0');
+                    const afterDate = Math.floor(new Date(`${y}-${m}-${day}T00:00:00`).getTime() / 1000);
+                    const beforeDate = afterDate + 86400;
+
+                    const p = gapi.client.gmail.users.messages.list({
+                        'userId': 'me',
+                        'q': `after:${afterDate} before:${beforeDate}`
+                    }).then(res => res.result.messages ? res.result.messages.length : 0).catch(() => 0);
+
+                    promises.push(p);
+                }
+
+                const results = await Promise.all(promises);
+
+                if (emailsChart) {
+                    emailsChart.data.labels = labels;
+                    emailsChart.data.datasets[0].data = results;
+                    emailsChart.update();
+                }
+
+            } catch (err) {
+                console.error("Erro ao buscar dados do dashboard:", err);
+                let msgDetalhada = "Erro desconhecido";
+                if (err.result && err.result.error) {
+                    msgDetalhada = err.result.error.message;
+                } else if (err.message) {
+                    msgDetalhada = err.message;
+                } else {
+                    msgDetalhada = JSON.stringify(err);
+                }
+                alert("Houve um erro do Google ao buscar os dados:\n\n" + msgDetalhada + "\n\nSe o erro falar sobre 'API has not been used' ou 'is disabled', você precisa ativar a API no Google Cloud.");
+
+                document.getElementById('unread-emails').innerText = 'Erro';
+                document.getElementById('meetings-today').innerText = 'Erro';
+                document.getElementById('agenda-list').innerHTML = '<div class="agenda-item"><div class="agenda-details"><div class="agenda-title" style="color:var(--accent-3)">Falha ao carregar</div></div></div>';
+            }
+        }
+    </script>
+</body>
+
+</html>
